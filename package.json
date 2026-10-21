@@ -1,0 +1,17 @@
+{
+  "name": "watch-battery-finder",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Photograph a watch, find out if it's quartz or automatic, and which battery to buy.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply watch-battery-finder --local",
+    "db:migrate:remote": "wrangler d1 migrations apply watch-battery-finder --remote",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.3"
+  }
+}

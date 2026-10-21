@@ -1,0 +1,25 @@
+name = "watch-battery-finder"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# The web app (public/) is served as static assets; everything else (/api/*) hits the Worker.
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "watch-battery-finder"
+# Paste the id printed by `npx wrangler d1 create watch-battery-finder` here before deploying.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+# Comma-separated; the first model that exists for your API key is used.
+GEMINI_MODEL = "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite,gemini-2.5-flash"
+# auto | tavily | brave | google_cse | duckduckgo  (auto picks the first one you have a key for)
+SEARCH_PROVIDER = "auto"
+
+# Secrets (set with `npx wrangler secret put NAME`, or in .dev.vars for local dev):
+#   GEMINI_API_KEY   - required for reading photos (free at https://aistudio.google.com/apikey)
+#   APP_PASSCODE     - recommended, so strangers can't use up your free quota
+#   TAVILY_API_KEY / BRAVE_API_KEY / GOOGLE_CSE_KEY + GOOGLE_CSE_CX - optional, better web search

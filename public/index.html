@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Watch Battery Finder</title>
+  <meta name="description" content="Photograph a watch to find out if it's quartz or automatic and which battery it takes.">
+  <meta name="theme-color" content="#14181f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Watch Battery Finder</h1>
+    <span id="status-dot" class="dot" title="Server status"></span>
+  </header>
+
+  <main>
+    <!-- SCAN -->
+    <section id="view-scan" class="view active">
+      <div class="camera">
+        <video id="video" playsinline muted autoplay></video>
+        <div class="guide" aria-hidden="true"></div>
+        <div id="bubble-wrap" class="bubble-wrap" aria-hidden="true"><div id="bubble" class="bubble"></div></div>
+        <div id="level-text" class="level-text">Camera off</div>
+        <div id="camera-off" class="camera-off">
+          <p>Lay the watch flat on a table. Hold the phone flat above it. The circle turns green when you're level.</p>
+          <button id="start-camera" class="btn primary">Start camera</button>
+        </div>
+        <label id="zoom-wrap" class="zoom" hidden>Zoom <input id="zoom" type="range" min="1" max="1" step="0.1" value="1"></label>
+      </div>
+
+      <div class="shot-tabs" role="tablist">
+        <button class="tab active" data-shot="dial" role="tab">① Dial</button>
+        <button class="tab" data-shot="caseback" role="tab">② Caseback</button>
+        <button class="tab" data-shot="extra" role="tab">+ Extra</button>
+      </div>
+      <p id="shot-tip" class="tip"></p>
+
+      <div class="capture-row">
+        <label class="btn ghost small">Upload<input id="upload" type="file" accept="image/*" hidden></label>
+        <button id="capture" class="shutter" aria-label="Take photo" disabled></button>
+        <label class="btn ghost small">Phone cam<input id="native-cam" type="file" accept="image/*" capture="environment" hidden></label>
+      </div>
+
+      <div id="shots" class="shots"></div>
+
+      <details class="more">
+        <summary>More clues (optional)</summary>
+        <div class="clue">
+          <div class="clue-head">
+            <strong>Second-hand test</strong>
+            <button id="tick-btn" class="btn small" disabled>Record 8 s</button>
+          </div>
+          <p class="muted">Keep the phone still (rest it on something). Quartz watches tick once a second; automatics sweep.</p>
+          <canvas id="tick-chart" class="spark" width="600" height="60" hidden></canvas>
+          <p id="tick-result" class="result-line"></p>
+        </div>
+        <div class="clue">
+          <div class="clue-head">
+            <strong>Case size</strong>
+            <button id="measure-btn" class="btn small" disabled>Measure on dial photo</button>
+          </div>
+          <p class="muted">Put your ring (or a coin) next to the watch in the dial photo, then tap the edges of both.</p>
+          <p id="size-result" class="result-line"></p>
+        </div>
+      </details>
+
+      <label class="field">What can you read? (optional, or instead of photos) <input id="hint" placeholder="e.g. 7N43-0AA0, Miyota 2035, old battery says 377" autocomplete="off"></label>
+
+      <label class="field">Whose watch? <input id="owner" placeholder="e.g. Mum, Aiman" autocomplete="off"></label>
+
+      <button id="identify" class="btn primary block" disabled>Identify watch</button>
+      <p id="scan-error" class="error" role="alert"></p>
+    </section>
+
+    <!-- RESULT -->
+    <section id="view-result" class="view">
+      <div id="result"></div>
+    </section>
+
+    <!-- TO OPEN / SHOPPING -->
+    <section id="view-list" class="view">
+      <div class="section-head">
+        <h2>Batteries to buy</h2>
+        <button id="copy-shopping" class="btn small">Copy list</button>
+      </div>
+      <div id="shopping" class="card-list"></div>
+      <h2>Watches waiting</h2>
+      <div id="pending" class="card-list"></div>
+      <details class="more">
+        <summary>Done / older</summary>
+        <div id="done" class="card-list"></div>
+      </details>
+    </section>
+
+    <!-- DATABASE -->
+    <section id="view-db" class="view">
+      <h2>Battery cross-reference</h2>
+      <label class="field"><input id="battery-q" placeholder="Type any battery name: 377, SR626SW, AG4…" autocomplete="off"></label>
+      <div id="battery-a" class="battery-answer"></div>
+      <h2>Confirmed watches</h2>
+      <label class="field"><input id="db-q" placeholder="Search brand, owner, movement, battery…" autocomplete="off"></label>
+      <div id="watches" class="card-list"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <h2>Settings</h2>
+      <label class="field">App passcode <input id="set-passcode" type="password" autocomplete="current-password" placeholder="Only if you set APP_PASSCODE"></label>
+      <label class="field">Size reference name <input id="set-ref-name" placeholder="My ring"></label>
+      <label class="field">Its outer diameter (mm) <input id="set-ref-mm" type="number" step="0.1" min="5" max="60" placeholder="e.g. 22.0"></label>
+      <p class="muted">Measure your ring's <em>outside</em> diameter once with a ruler or calipers. A coin works too (look up its diameter).</p>
+      <label class="field">Level tolerance (degrees) <input id="set-tilt" type="number" step="0.5" min="1" max="10" placeholder="3"></label>
+      <button id="save-settings" class="btn primary">Save</button>
+      <h2>Server</h2>
+      <pre id="health" class="health">…</pre>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-view="scan" class="active">📷<span>Scan</span></button>
+    <button data-view="list">🛒<span>To open</span></button>
+    <button data-view="db">📚<span>Database</span></button>
+    <button data-view="settings">⚙️<span>Settings</span></button>
+  </nav>
+
+  <!-- Confirm-after-opening form -->
+  <dialog id="confirm-dialog">
+    <form id="confirm-form" method="dialog">
+      <h2>What did you find inside?</h2>
+      <p class="muted">Saving teaches the database. Next time this watch or movement shows up, the answer is instant.</p>
+      <label class="field">Battery <input name="battery" required placeholder="As printed on the old cell, e.g. SR626SW"></label>
+      <p id="confirm-battery-hint" class="hint"></p>
+      <label class="field">Movement / calibre <input name="calibre" placeholder="Printed on the movement, e.g. 2035, VX42E"></label>
+      <div class="grid2">
+        <label class="field">Brand <input name="brand"></label>
+        <label class="field">Model <input name="model"></label>
+        <label class="field">Reference <input name="reference"></label>
+        <label class="field">Caseback code <input name="caseback_code"></label>
+        <label class="field">Type
+          <select name="movement_type">
+            <option value="quartz">Quartz</option><option value="solar">Solar</option><option value="kinetic">Kinetic</option>
+            <option value="automatic">Automatic</option><option value="manual_wind">Hand-wound</option><option value="unknown">Unknown</option>
+          </select>
+        </label>
+        <label class="field">Case (mm) <input name="case_mm" type="number" step="0.1"></label>
+      </div>
+      <label class="field">Whose <input name="owner"></label>
+      <label class="field">Notes <input name="notes" placeholder="e.g. snap-back, needed a press"></label>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn ghost" formnovalidate>Cancel</button>
+        <button id="confirm-save" value="save" class="btn primary">Save ✓</button>
+      </div>
+      <p id="confirm-error" class="error"></p>
+    </form>
+  </dialog>
+
+  <!-- Measure -->
+  <dialog id="measure-dialog" class="full">
+    <div class="measure-top">
+      <div class="seg">
+        <button data-target="case" class="active">Watch case</button>
+        <button data-target="ref">Ring / coin</button>
+      </div>
+      <label class="ref-mm">Ref Ø mm <input id="measure-ref-mm" type="number" step="0.1"></label>
+    </div>
+    <p class="muted center" id="measure-help">Tap the left and right edge of the watch case.</p>
+    <div class="measure-stage"><canvas id="measure-canvas"></canvas></div>
+    <p id="measure-out" class="measure-out">–</p>
+    <div class="dialog-actions">
+      <button id="measure-cancel" class="btn ghost">Cancel</button>
+      <button id="measure-ok" class="btn primary" disabled>Use this size</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

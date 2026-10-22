@@ -1,5 +1,6 @@
 import { identify, summarize } from './lib/identify.js';
 import { repo as makeRepo } from './lib/db.js';
+import { ensureSchema } from './lib/schema.js';
 import { pickProvider } from './lib/search.js';
 import { BATTERIES, describeBattery, normalizeBattery } from './data/batteries.js';
 import { movementMaker, makerFromBrand } from './lib/normalize.js';
@@ -32,6 +33,7 @@ function health(env) {
 }
 
 async function route(request, env, url) {
+  if (env.DB) await ensureSchema(env.DB);
   const repo = env.DB ? makeRepo(env.DB) : null;
   const method = request.method;
   const path = url.pathname;

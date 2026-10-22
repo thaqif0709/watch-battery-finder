@@ -1,5 +1,5 @@
 -- Movements you have confirmed by opening a watch (movement -> battery). Grows over time.
-CREATE TABLE movements (
+CREATE TABLE IF NOT EXISTS movements (
   maker TEXT NOT NULL DEFAULT '',
   calibre_norm TEXT NOT NULL,
   calibre TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE movements (
 );
 
 -- Watches you have confirmed after opening (watch -> movement -> battery).
-CREATE TABLE watches (
+CREATE TABLE IF NOT EXISTS watches (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   brand TEXT,
   model TEXT,
@@ -32,12 +32,12 @@ CREATE TABLE watches (
   lookup_id INTEGER,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX watches_reference ON watches (reference_norm);
-CREATE INDEX watches_caseback ON watches (caseback_norm);
-CREATE INDEX watches_calibre ON watches (calibre_norm);
+CREATE INDEX IF NOT EXISTS watches_reference ON watches (reference_norm);
+CREATE INDEX IF NOT EXISTS watches_caseback ON watches (caseback_norm);
+CREATE INDEX IF NOT EXISTS watches_calibre ON watches (calibre_norm);
 
 -- Every identification you run. "pending" ones make up the battery shopping list.
-CREATE TABLE lookups (
+CREATE TABLE IF NOT EXISTS lookups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   owner TEXT,
   status TEXT NOT NULL DEFAULT 'pending', -- pending | done | dismissed
@@ -47,10 +47,10 @@ CREATE TABLE lookups (
   thumbnail TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX lookups_status ON lookups (status, created_at);
+CREATE INDEX IF NOT EXISTS lookups_status ON lookups (status, created_at);
 
 -- Cached web search evidence, so the same movement doesn't burn search quota twice.
-CREATE TABLE web_cache (
+CREATE TABLE IF NOT EXISTS web_cache (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
